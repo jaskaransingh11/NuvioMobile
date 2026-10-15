@@ -28,6 +28,7 @@ internal suspend fun transferAndroidDownload(
     directory: File,
     validator: String?,
     client: OkHttpClient = downloadHttpClient,
+    parallelConnections: Int = 1,
     onHeaders: (totalBytes: Long?, validator: String?) -> Unit,
     onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit,
 ): File = coroutineScope {
@@ -37,6 +38,12 @@ internal suspend fun transferAndroidDownload(
             require(File(item.fileName).name == item.fileName && item.fileName.isNotBlank())
             check(directory.isDirectory || directory.mkdirs()) { "Cannot create downloads directory" }
             val partial = File(directory, "${item.fileName}.part")
+            if (parallelConnections > 1) {
+                val multi = transferAndroidMultiRange(
+                    item, directory, client, parallelConnections, onHeaders, onProgress,
+                )
+                if (multi != null) return@async multi
+            }
             var offset = partial.takeIf(File::isFile)?.length() ?: 0L
             var restarted = false
 

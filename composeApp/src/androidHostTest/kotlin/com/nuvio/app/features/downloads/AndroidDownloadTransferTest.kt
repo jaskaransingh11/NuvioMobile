@@ -125,6 +125,7 @@ class AndroidDownloadTransferTest {
         assertTrue(shouldRetryAndroidDownload(DownloadHttpException(503), 0))
         assertTrue(shouldRetryAndroidDownload(DownloadHttpException(429), 0))
         assertFalse(shouldRetryAndroidDownload(DownloadHttpException(403), 0))
+        assertFalse(shouldRetryAndroidDownload(DownloadIdentityException("mismatched file"), 0))
         assertFalse(shouldRetryAndroidDownload(IOException("connection lost"), 4))
     }
 }
