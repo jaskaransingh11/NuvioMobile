@@ -31,9 +31,6 @@ internal suspend fun transferAndroidDownload(
     onHeaders: (totalBytes: Long?, validator: String?) -> Unit,
     onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit,
 ): File = coroutineScope {
-    // Keep legacy partials on the original safe single-stream path.
-    val accelerated = trySegmentedAndroidDownload(item, directory, client, onHeaders, onProgress)
-    if (accelerated != null) return@coroutineScope accelerated
     val activeCall = AtomicReference<Call?>()
     val transfer = async(Dispatchers.IO) {
         try {
