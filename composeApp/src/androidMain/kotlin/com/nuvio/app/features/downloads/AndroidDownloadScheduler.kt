@@ -124,6 +124,9 @@ internal class AndroidDownloadScheduler(val context: Context) {
             lock(fileName).withLock {
                 if (store.get(fileName) == null) {
                     File(directory, "$fileName.part").delete()
+                    // An explicit user removal also clears the segmented transport's private staging files.
+                    File(directory, "$fileName.segments").deleteRecursively()
+                    File(directory, "$fileName.assembling").delete()
                     DownloadSubtitleStorage(File(directory, fileName).toURI().toString()).remove()
                 }
             }
