@@ -124,6 +124,7 @@ internal class AndroidDownloadScheduler(val context: Context) {
             lock(fileName).withLock {
                 if (store.get(fileName) == null) {
                     File(directory, "$fileName.part").delete()
+                    android.util.AtomicFile(File(directory, "$fileName.part.ranges.json")).delete()
                     DownloadSubtitleStorage(File(directory, fileName).toURI().toString()).remove()
                 }
             }
@@ -160,6 +161,7 @@ internal class AndroidDownloadScheduler(val context: Context) {
                 directory = directory,
                 validator = transfer.validator,
                 client = client,
+                parallelConnections = 4,
                 onHeaders = { total, validator ->
                     updateActive(transfer) { it.copy(validator = validator, item = it.item.copy(totalBytes = total)) }
                 },
@@ -186,6 +188,9 @@ internal class AndroidDownloadScheduler(val context: Context) {
                     totalBytes = bytes,
                     errorMessage = null,
                 ))
+            }
+            if (destination.isFile && store.get(fileName)?.item?.status == DownloadStatus.Completed) {
+                android.util.AtomicFile(File(directory, "$fileName.part.ranges.json")).delete()
             }
             false
         } catch (cancelled: CancellationException) {
@@ -238,6 +243,7 @@ internal class AndroidDownloadScheduler(val context: Context) {
 internal fun shouldRetryAndroidDownload(error: Exception, retries: Int): Boolean =
     retries < 4 && when (error) {
         is DownloadHttpException -> error.statusCode == 408 || error.statusCode == 429 || error.statusCode in 500..599
+        is DownloadIdentityException -> false
         is IOException -> true
         else -> false
     }
