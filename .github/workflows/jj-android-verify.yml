@@ -16,11 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 65
     steps:
-      - name: Checkout exact Android fork commit
-        uses: actions/checkout@v4
-        with:
-          ref: 2b8e11156eae7d51cf15cf6bb179e5e0855b49ef
-          persist-credentials: false
+      - name: Clone Android source without malformed legacy submodule checkout
+        shell: bash
+        run: |
+          git clone --quiet --depth 1 --filter=blob:none --single-branch \
+            --branch feature/android-segmented-download-jj-20261015 \
+            https://github.com/jaskaransingh11/NuvioMobile.git .
       - name: Verify immutable source revision
         shell: bash
         run: |
