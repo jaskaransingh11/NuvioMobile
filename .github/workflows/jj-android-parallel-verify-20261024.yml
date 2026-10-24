@@ -47,6 +47,12 @@ jobs:
             --tests '*DownloadsTransferWorkerTest' \
             -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore \
             --no-daemon --max-workers=2 --stacktrace
+      - name: Isolate test APK from installed production Nuvio
+        shell: bash
+        run: |
+          test "$(grep -c 'applicationId = "com.nuvio.app"' androidApp/build.gradle.kts)" = 1
+          sed -i 's/applicationId = "com.nuvio.app"/applicationId = "com.nuvio.app.jjtest"/' androidApp/build.gradle.kts
+          grep -q 'applicationId = "com.nuvio.app.jjtest"' androidApp/build.gradle.kts
       - name: Build Android debug APK
         run: |
           ./gradlew :androidApp:assembleFullDebug \
