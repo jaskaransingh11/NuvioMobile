@@ -38,9 +38,12 @@ internal suspend fun transferAndroidDownload(
             require(File(item.fileName).name == item.fileName && item.fileName.isNotBlank())
             check(directory.isDirectory || directory.mkdirs()) { "Cannot create downloads directory" }
             val partial = File(directory, "${item.fileName}.part")
-            if (parallelConnections > 1) {
+            // A preallocated multi-range partial must never enter the sequential path:
+            // its apparent length is the total file size, not the downloaded count.
+            val hasRangeCheckpoint = File(directory, "${item.fileName}.part.ranges.json").isFile
+            if (parallelConnections > 1 || hasRangeCheckpoint) {
                 val multi = transferAndroidMultiRange(
-                    item, directory, client, parallelConnections, onHeaders, onProgress,
+                    item, directory, client, maxOf(2, parallelConnections), onHeaders, onProgress,
                 )
                 if (multi != null) return@async multi
             }
