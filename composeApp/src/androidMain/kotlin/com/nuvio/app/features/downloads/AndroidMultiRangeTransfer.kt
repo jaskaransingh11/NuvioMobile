@@ -157,10 +157,14 @@ internal suspend fun transferAndroidMultiRange(
             throw DownloadIdentityException("Cannot resume: range checkpoint is damaged")
         }
     } else null
+    // The process can die after atomically writing an empty checkpoint but
+    // before preallocating the sparse file. Only that empty state is recoverable.
+    val needsPreallocation = recorded != null && recorded.completed.isEmpty() && partial.length() < total
     if (recorded != null &&
         (recorded.format != 1 || recorded.total != total || recorded.etag != etag ||
             recorded.sourceHash != sourceHash || recorded.chunkSize != RANGE_CHUNK_BYTES ||
-            recorded.completed.any { it < 0 || it >= numChunks } || partial.length() != total)) {
+            recorded.completed.any { it < 0 || it >= numChunks } ||
+            (partial.length() != total && !needsPreallocation))) {
         throw DownloadIdentityException("Cannot resume: the saved source does not match; partial data was preserved")
     }
 
@@ -189,7 +193,7 @@ internal suspend fun transferAndroidMultiRange(
     // Store metadata before creating a sparse .part. A process death cannot
     // accidentally make the sequential downloader treat its length as progress.
     synchronized(stateLock) { persist() }
-    if (!resuming) {
+    if (!resuming || needsPreallocation) {
         RandomAccessFile(partial, "rw").use { it.setLength(total) }
     }
 
