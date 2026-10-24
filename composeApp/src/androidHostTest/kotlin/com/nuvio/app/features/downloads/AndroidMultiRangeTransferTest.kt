@@ -258,4 +258,56 @@ class AndroidMultiRangeTransferTest {
             assertFalse(File(dir, "video.mkv").exists())
         }
     }
+
+    @Test
+    fun emptyCheckpointSurvivesCrashBeforeFilePreallocation() = runBlocking {
+        MockWebServer().use { server ->
+            var rejectSegments = true
+            server.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse =
+                    if (rejectSegments && request.getHeader("Range") != "bytes=0-0") {
+                        MockResponse().setResponseCode(503)
+                    } else rangeResponse(request, "\"v1\"")
+            }
+            val dir = temporary.newFolder()
+            val item = downloadItem(server.url("/video").toString())
+            assertFailsWith<DownloadHttpException> {
+                transferAndroidDownload(item, dir, null, parallelConnections = 2,
+                    onHeaders = { _, _ -> }, onProgress = { _, _ -> })
+            }
+            val checkpoint = File(dir, "video.mkv.part.ranges.json")
+            assertTrue(checkpoint.readText().contains("\"completed\":[]"))
+            val partial = File(dir, "video.mkv.part")
+            java.io.RandomAccessFile(partial, "rw").use { it.setLength(0L) }
+            rejectSegments = false
+            val result = transferAndroidDownload(item, dir, null, parallelConnections = 4,
+                onHeaders = { _, _ -> }, onProgress = { _, _ -> })
+            assertContentEquals(bytes, result.readBytes())
+        }
+    }
+
+    @Test
+    fun singleConnectionCannotMistakeSparseMultiRangeFileForComplete() = runBlocking {
+        MockWebServer().use { server ->
+            var failLastChunk = true
+            server.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse =
+                    if (failLastChunk && request.getHeader("Range") == "bytes=16777216-25165823") {
+                        MockResponse().setResponseCode(503)
+                    } else rangeResponse(request, "\"v1\"")
+            }
+            val dir = temporary.newFolder()
+            val item = downloadItem(server.url("/video").toString())
+            assertFailsWith<DownloadHttpException> {
+                transferAndroidDownload(item, dir, null, parallelConnections = 2,
+                    onHeaders = { _, _ -> }, onProgress = { _, _ -> })
+            }
+            assertTrue(File(dir, "video.mkv.part.ranges.json").isFile)
+            failLastChunk = false
+            val result = transferAndroidDownload(item, dir, null, parallelConnections = 1,
+                onHeaders = { _, _ -> }, onProgress = { _, _ -> })
+            assertContentEquals(bytes, result.readBytes())
+            assertEquals(bytes.size.toLong(), result.length())
+        }
+    }
 }
