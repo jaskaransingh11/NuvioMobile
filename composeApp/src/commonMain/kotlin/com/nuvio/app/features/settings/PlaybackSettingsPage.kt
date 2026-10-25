@@ -116,6 +116,7 @@ internal fun LazyListScope.playbackSettingsContent(
     androidLibmpvYuv420pEnabled: Boolean,
     decoderPriority: Int,
     mapDV7ToHevc: Boolean,
+    videoAudioBoostEnabled: Boolean,
     tunnelingEnabled: Boolean,
     useLibass: Boolean,
     libassRenderType: String,
@@ -139,6 +140,7 @@ internal fun LazyListScope.playbackSettingsContent(
             androidLibmpvYuv420pEnabled = androidLibmpvYuv420pEnabled,
             decoderPriority = decoderPriority,
             mapDV7ToHevc = mapDV7ToHevc,
+            videoAudioBoostEnabled = videoAudioBoostEnabled,
             tunnelingEnabled = tunnelingEnabled,
             useLibass = useLibass,
             libassRenderType = libassRenderType,
@@ -325,6 +327,7 @@ private fun PlaybackSettingsSection(
     androidLibmpvYuv420pEnabled: Boolean,
     decoderPriority: Int,
     mapDV7ToHevc: Boolean,
+    videoAudioBoostEnabled: Boolean,
     tunnelingEnabled: Boolean,
     useLibass: Boolean,
     libassRenderType: String,
@@ -1005,6 +1008,15 @@ private fun PlaybackSettingsSection(
                         enabled = exoOptionsEnabled,
                         isTablet = isTablet,
                         onCheckedChange = PlayerSettingsRepository::setMapDV7ToHevc,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsSwitchRow(
+                        title = "Boost quiet videos (+3 dB)",
+                        description = "Nuvio ExoPlayer audio only. Off by default; switch off if loud scenes distort.",
+                        checked = videoAudioBoostEnabled,
+                        enabled = exoOptionsEnabled,
+                        isTablet = isTablet,
+                        onCheckedChange = PlayerSettingsRepository::setVideoAudioBoostEnabled,
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(

@@ -51,6 +51,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.TransferListener
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import android.media.audiofx.LoudnessEnhancer
 import androidx.media3.exoplayer.ForwardingRenderer
 import androidx.media3.exoplayer.Renderer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -472,6 +473,43 @@ private fun ExoPlayerSurface(
             useCustomSubtitles = false,
         )
         player
+    }
+
+    // Applies only to Nuvio's ExoPlayer session, not Samsung's global audio policy.
+    // Default is OFF. User can A/B in Settings > Playback; gain limited to +3 dB.
+    DisposableEffect(exoPlayer, playerSettings.videoAudioBoostEnabled) {
+        var enhancer: LoudnessEnhancer? = null
+        var boundSession = C.AUDIO_SESSION_ID_UNSET
+        fun attach(sessionId: Int) {
+            if (sessionId == boundSession) return
+            enhancer?.release()
+            enhancer = null
+            boundSession = sessionId
+            if (playerSettings.videoAudioBoostEnabled && sessionId > 0) {
+                try {
+                    enhancer = LoudnessEnhancer(sessionId).apply {
+                        setTargetGain(300) // 300 millibels = +3 dB.
+                        enabled = true
+                    }
+                } catch (error: Exception) {
+                    android.util.Log.w("NuvioVideoAudioBoost", "Boost unavailable; bypassing", error)
+                }
+            }
+        }
+        val listener = object : androidx.media3.common.Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                attach(audioSessionId)
+            }
+        }
+        if (playerSettings.videoAudioBoostEnabled) {
+            exoPlayer.addListener(listener)
+            attach(exoPlayer.audioSessionId)
+        }
+        onDispose {
+            if (playerSettings.videoAudioBoostEnabled) exoPlayer.removeListener(listener)
+            enhancer?.release()
+            enhancer = null
+        }
     }
 
     val nowPlayingController = remember(context, exoPlayer) {
