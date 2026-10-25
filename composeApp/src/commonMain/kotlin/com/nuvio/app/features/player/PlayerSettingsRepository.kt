@@ -59,6 +59,7 @@ data class PlayerSettingsUiState(
     val androidLibmpvYuv420pEnabled: Boolean = false,
     val decoderPriority: Int = 1,
     val mapDV7ToHevc: Boolean = false,
+val videoAudioBoostEnabled: Boolean = false,
     val tunnelingEnabled: Boolean = false,
     val exoNativeMemoryEnabled: Boolean = false,
     val bufferEngineEnabled: Boolean = false,
@@ -141,6 +142,7 @@ object PlayerSettingsRepository {
     private var androidLibmpvYuv420pEnabled = false
     private var decoderPriority = 1
     private var mapDV7ToHevc = false
+private var videoAudioBoostEnabled = false
     private var tunnelingEnabled = false
     private var exoNativeMemoryEnabled = false
     private var bufferEngineEnabled = false
@@ -228,6 +230,7 @@ object PlayerSettingsRepository {
         androidLibmpvYuv420pEnabled = false
         decoderPriority = 1
         mapDV7ToHevc = false
+        videoAudioBoostEnabled = false
         tunnelingEnabled = false
         exoNativeMemoryEnabled = false
         bufferEngineEnabled = false
@@ -345,6 +348,7 @@ object PlayerSettingsRepository {
         androidLibmpvYuv420pEnabled = PlayerSettingsStorage.loadAndroidLibmpvYuv420pEnabled() ?: false
         decoderPriority = PlayerSettingsStorage.loadDecoderPriority() ?: 1
         mapDV7ToHevc = PlayerSettingsStorage.loadMapDV7ToHevc() ?: false
+        videoAudioBoostEnabled = PlayerSettingsStorage.loadVideoAudioBoostEnabled() ?: false
         tunnelingEnabled = PlayerSettingsStorage.loadTunnelingEnabled() ?: false
         exoNativeMemoryEnabled = (PlayerSettingsStorage.loadExoNativeMemoryEnabled() ?: false) &&
             isExoNativeMemorySupported()
@@ -676,6 +680,14 @@ object PlayerSettingsRepository {
         mapDV7ToHevc = enabled
         publish()
         PlayerSettingsStorage.saveMapDV7ToHevc(enabled)
+    }
+
+    fun setVideoAudioBoostEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (videoAudioBoostEnabled == enabled) return
+        videoAudioBoostEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveVideoAudioBoostEnabled(enabled)
     }
 
     fun setTunnelingEnabled(enabled: Boolean) {
@@ -1181,6 +1193,7 @@ object PlayerSettingsRepository {
             androidLibmpvYuv420pEnabled = androidLibmpvYuv420pEnabled,
             decoderPriority = decoderPriority,
             mapDV7ToHevc = mapDV7ToHevc,
+            videoAudioBoostEnabled = videoAudioBoostEnabled,
             tunnelingEnabled = tunnelingEnabled,
             exoNativeMemoryEnabled = exoNativeMemoryEnabled,
             bufferEngineEnabled = bufferEngineEnabled,

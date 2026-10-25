@@ -55,6 +55,7 @@ actual object PlayerSettingsStorage {
     private const val androidLibmpvYuv420pEnabledKey = "android_libmpv_yuv420p_enabled"
     private const val decoderPriorityKey = "decoder_priority"
     private const val mapDV7ToHevcKey = "map_dv7_to_hevc"
+    private const val videoAudioBoostEnabledKey = "video_audio_boost_enabled"
     private const val tunnelingEnabledKey = "tunneling_enabled"
     private const val exoNativeMemoryEnabledKey = "exo_native_memory_enabled"
     private const val vodCacheEnabledKey = "vod_cache_enabled"
@@ -142,6 +143,7 @@ actual object PlayerSettingsStorage {
         androidLibmpvYuv420pEnabledKey,
         decoderPriorityKey,
         mapDV7ToHevcKey,
+        videoAudioBoostEnabledKey,
         tunnelingEnabledKey,
         streamAutoPlayModeKey,
         streamAutoPlaySourceKey,
@@ -638,6 +640,20 @@ actual object PlayerSettingsStorage {
         NSUserDefaults.standardUserDefaults.setBool(enabled, forKey = ProfileScopedKey.of(mapDV7ToHevcKey))
     }
 
+    actual fun loadVideoAudioBoostEnabled(): Boolean? {
+        val defaults = NSUserDefaults.standardUserDefaults
+        val key = ProfileScopedKey.of(videoAudioBoostEnabledKey)
+        return if (defaults.objectForKey(key) != null) {
+            defaults.boolForKey(key)
+        } else {
+            null
+        }
+    }
+
+    actual fun saveVideoAudioBoostEnabled(enabled: Boolean) {
+        NSUserDefaults.standardUserDefaults.setBool(enabled, forKey = ProfileScopedKey.of(videoAudioBoostEnabledKey))
+    }
+
     actual fun loadTunnelingEnabled(): Boolean? {
         val defaults = NSUserDefaults.standardUserDefaults
         val key = ProfileScopedKey.of(tunnelingEnabledKey)
@@ -1116,6 +1132,7 @@ actual object PlayerSettingsStorage {
         loadAndroidLibmpvYuv420pEnabled()?.let { put(androidLibmpvYuv420pEnabledKey, encodeSyncBoolean(it)) }
         loadDecoderPriority()?.let { put(decoderPriorityKey, encodeSyncInt(it)) }
         loadMapDV7ToHevc()?.let { put(mapDV7ToHevcKey, encodeSyncBoolean(it)) }
+        loadVideoAudioBoostEnabled()?.let { put(videoAudioBoostEnabledKey, encodeSyncBoolean(it)) }
         loadTunnelingEnabled()?.let { put(tunnelingEnabledKey, encodeSyncBoolean(it)) }
         loadStreamAutoPlayMode()?.let { put(streamAutoPlayModeKey, encodeSyncString(it)) }
         loadStreamAutoPlaySource()?.let { put(streamAutoPlaySourceKey, encodeSyncString(it)) }
@@ -1196,6 +1213,7 @@ actual object PlayerSettingsStorage {
         payload.decodeSyncBoolean(androidLibmpvYuv420pEnabledKey)?.let(::saveAndroidLibmpvYuv420pEnabled)
         payload.decodeSyncInt(decoderPriorityKey)?.let(::saveDecoderPriority)
         payload.decodeSyncBoolean(mapDV7ToHevcKey)?.let(::saveMapDV7ToHevc)
+        payload.decodeSyncBoolean(videoAudioBoostEnabledKey)?.let(::saveVideoAudioBoostEnabled)
         payload.decodeSyncBoolean(tunnelingEnabledKey)?.let(::saveTunnelingEnabled)
         payload.decodeSyncString(streamAutoPlayModeKey)?.let(::saveStreamAutoPlayMode)
         payload.decodeSyncString(streamAutoPlaySourceKey)?.let(::saveStreamAutoPlaySource)
