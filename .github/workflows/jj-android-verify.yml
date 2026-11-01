@@ -25,7 +25,7 @@ jobs:
       - name: Verify immutable source revision
         shell: bash
         run: |
-          test "$(git rev-parse HEAD^)" = b4ef12d975647fd0c54b31eb9444a6e92054621c
+          test "$(git rev-parse HEAD^)" = f59856922873411cd31aedc0ab7641243b825852
           git status --porcelain
       - name: Configure public Nuvio cloud client (no user secrets)
         shell: bash
